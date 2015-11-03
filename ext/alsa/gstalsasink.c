@@ -285,6 +285,9 @@ gst_alsasink_getcaps (GstBaseSink * bsink, GstCaps * filter)
   GstPadTemplate *pad_template;
   GstAlsaSink *sink = GST_ALSA_SINK (bsink);
   GstCaps *caps, *templ_caps;
+  snd_pcm_stream_t stream_type;
+  snd_pcm_t *pcm;
+  int res;
 
   GST_OBJECT_LOCK (sink);
   if (sink->handle == NULL) {
@@ -323,10 +326,19 @@ gst_alsasink_getcaps (GstBaseSink * bsink, GstCaps * filter)
       sink->handle, templ_caps);
   gst_caps_unref (templ_caps);
 
+  /* Try opening IEC958 device to see if we can support that format (playback
+   * only for now but we could add SPDIF capture later)
+   */
+
+  if (gst_alsa_iec958_formats_supported(GST_OBJECT (sink), sink->device,
+    &sink->handle) == TRUE) {
+    GST_LOG_OBJECT (sink, "Add pass-through capabilities");
+    gst_caps_append (caps, gst_caps_from_string (PASSTHROUGH_CAPS));
+  }
+
   if (caps) {
     sink->cached_caps = gst_caps_ref (caps);
   }
-
   GST_OBJECT_UNLOCK (sink);
 
   GST_INFO_OBJECT (sink, "returning caps %" GST_PTR_FORMAT, caps);
