@@ -823,12 +823,15 @@ alsasink_parse_spec (GstAlsaSink * alsa, GstAudioRingBufferSpec * spec)
         default:
           goto error;
       }
+      alsa->channels = GST_AUDIO_INFO_CHANNELS (&spec->info);
       break;
     case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_A_LAW:
       alsa->format = SND_PCM_FORMAT_A_LAW;
+      alsa->channels = GST_AUDIO_INFO_CHANNELS (&spec->info);
       break;
     case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_MU_LAW:
       alsa->format = SND_PCM_FORMAT_MU_LAW;
+      alsa->channels = GST_AUDIO_INFO_CHANNELS (&spec->info);
       break;
     case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_AC3:
     case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_EAC3:
@@ -836,13 +839,14 @@ alsasink_parse_spec (GstAlsaSink * alsa, GstAudioRingBufferSpec * spec)
     case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_MPEG:
       alsa->format = SND_PCM_FORMAT_S16_BE;
       alsa->iec958 = TRUE;
+      /* Set channels to stereo as iec playload are rendered on a stereo stream */
+      alsa->channels = 2;
       break;
     default:
       goto error;
 
   }
   alsa->rate = GST_AUDIO_INFO_RATE (&spec->info);
-  alsa->channels = GST_AUDIO_INFO_CHANNELS (&spec->info);
   alsa->buffer_time = spec->buffer_time;
   alsa->period_time = spec->latency_time;
   alsa->access = SND_PCM_ACCESS_RW_INTERLEAVED;
