@@ -1677,7 +1677,7 @@ gst_base_text_overlay_render_pangocairo (GstBaseTextOverlay * overlay,
   gint unscaled_width, unscaled_height;
   gint width, height;
   gboolean full_width = FALSE;
-  double scalef = 1.0;
+  double scalef = 1.0, scalefx, scalefy;
   double a, r, g, b;
   gdouble shadow_offset = 0.0;
   gdouble outline_offset = 0.0;
@@ -1805,6 +1805,14 @@ gst_base_text_overlay_render_pangocairo (GstBaseTextOverlay * overlay,
   height = ceil (height * overlay->render_scale);
   scalef *= overlay->render_scale;
 
+  /* i.MX special, will cause text a little small */
+  scalefx = scalef * ((gdouble)GST_ROUND_DOWN_8 (width)) / width;
+  scalefy = scalef * ((gdouble)GST_ROUND_DOWN_8 (height)) / height;
+  width = GST_ROUND_DOWN_8 (width);
+  height = GST_ROUND_DOWN_8 (height);
+  GST_DEBUG_OBJECT (overlay, "Rendering with width %d and height %d "
+      , width, height);
+
   if (width <= 0 || height <= 0) {
     g_mutex_unlock (GST_BASE_TEXT_OVERLAY_GET_CLASS (overlay)->pango_lock);
     GST_DEBUG_OBJECT (overlay,
@@ -1821,7 +1829,7 @@ gst_base_text_overlay_render_pangocairo (GstBaseTextOverlay * overlay,
   /* Prepare the transformation matrix. Note that the transformation happens
    * in reverse order. So for horizontal text, we will translate and then
    * scale. This is important to understand which scale shall be used. */
-  cairo_matrix_init_scale (&cairo_matrix, scalef, scalef);
+  cairo_matrix_init_scale (&cairo_matrix, scalefx, scalefy);
 
   if (overlay->use_vertical_render) {
     gint tmp;
