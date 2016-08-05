@@ -5,13 +5,15 @@ libgstallocators_@GST_API_VERSION@_includedir = $(includedir)/gstreamer-@GST_API
 libgstallocators_@GST_API_VERSION@_include_HEADERS = \
 	allocators.h \
 	gstfdmemory.h \
-	gstdmabuf.h
+	gstdmabuf.h \
+	gstallocatorphymem.h
 
 noinst_HEADERS =
 
 libgstallocators_@GST_API_VERSION@_la_SOURCES = \
 	gstfdmemory.c \
-	gstdmabuf.c 
+	gstdmabuf.c \
+	gstallocatorphymem.c
 
 libgstallocators_@GST_API_VERSION@_la_LIBADD = $(GST_LIBS) $(LIBM)
 libgstallocators_@GST_API_VERSION@_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS)
