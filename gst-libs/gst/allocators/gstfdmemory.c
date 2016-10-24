@@ -56,6 +56,12 @@ typedef struct
 static void
 gst_fd_mem_free (GstAllocator * allocator, GstMemory * gmem)
 {
+  GstFdAllocatorClass *aclass;
+
+  aclass = GST_FD_ALLOCATOR_GET_CLASS (allocator);
+  if (aclass->free)
+    aclass->free (allocator, gmem);
+
 #ifdef HAVE_MMAP
   GstFdMemory *mem = (GstFdMemory *) gmem;
 

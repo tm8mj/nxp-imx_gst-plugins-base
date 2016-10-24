@@ -45,8 +45,21 @@ GST_DEBUG_CATEGORY_STATIC (dmabuf_debug);
 G_DEFINE_TYPE (GstDmaBufAllocator, gst_dmabuf_allocator, GST_TYPE_FD_ALLOCATOR);
 
 static void
+gst_dmabuf_allocator_free (GstAllocator * allocator, GstMemory * memory)
+{
+  GstDmaBufAllocatorClass *aclass;
+
+  aclass = GST_DMABUF_ALLOCATOR_GET_CLASS (allocator);
+  if (aclass->free)
+    aclass->free (allocator, memory);
+}
+
+static void
 gst_dmabuf_allocator_class_init (GstDmaBufAllocatorClass * klass)
 {
+  GstFdAllocatorClass *fd_allocator_class = GST_FD_ALLOCATOR_CLASS  (klass);
+
+  fd_allocator_class->free = gst_dmabuf_allocator_free;
 }
 
 static void
