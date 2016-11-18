@@ -353,6 +353,12 @@ fi
 AM_CONDITIONAL(HAVE_QT, test "x$HAVE_QT" = "xyes")
 AM_CONDITIONAL(HAVE_QT_MOC, test "x$HAVE_QT_MOC" != "xno")
 
+dnl check for ion
+translit(dnm, m, l) AM_CONDITIONAL(USE_ION, true)
+AG_GST_CHECK_FEATURE(ION, [ion], ion, [
+  AC_CHECK_HEADER(linux/ion.h, HAVE_ION="yes", HAVE_ION="no")
+])
+
 dnl chck for linux headers needed by the joystick seek example
 AC_COMPILE_IFELSE(
 [

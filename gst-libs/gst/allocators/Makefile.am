@@ -8,12 +8,22 @@ libgstallocators_@GST_API_VERSION@_include_HEADERS = \
 	gstdmabuf.h \
 	gstallocatorphymem.h
 
+if USE_ION
+libgstallocators_@GST_API_VERSION@_include_HEADERS += \
+	gstionmemory.h
+endif
+
 noinst_HEADERS =
 
 libgstallocators_@GST_API_VERSION@_la_SOURCES = \
 	gstfdmemory.c \
 	gstdmabuf.c \
 	gstallocatorphymem.c
+
+if USE_ION
+libgstallocators_@GST_API_VERSION@_la_SOURCES += \
+	gstionmemory.c
+endif
 
 libgstallocators_@GST_API_VERSION@_la_LIBADD = $(GST_LIBS) $(LIBM)
 libgstallocators_@GST_API_VERSION@_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS)
