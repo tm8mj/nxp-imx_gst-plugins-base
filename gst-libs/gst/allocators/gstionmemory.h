@@ -47,6 +47,8 @@ struct _GstIONAllocator
   GstDmaBufAllocator parent;
 
   gint fd;
+  guint heap_id;
+  guint flags;
 };
 
 struct _GstIONAllocatorClass

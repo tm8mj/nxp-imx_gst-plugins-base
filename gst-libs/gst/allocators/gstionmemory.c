@@ -37,6 +37,17 @@ GST_DEBUG_CATEGORY_STATIC (ion_allocator_debug);
 
 G_DEFINE_TYPE (GstIONAllocator, gst_ion_allocator, GST_TYPE_DMABUF_ALLOCATOR)
 
+#define DEFAULT_HEAP_ID  0
+#define DEFAULT_FLAG     0
+
+enum
+{
+  PROP_0,
+  PROP_HEAP_ID,
+  PROP_FLAG,
+  PROP_LAST
+};
+
 static gint
 gst_ion_ioctl (gint fd, gint req, void *arg)
 {
@@ -57,7 +68,7 @@ gst_ion_mem_init (void)
 
   fd = open ("/dev/ion", O_RDWR);
   if (fd < 0) {
-    GST_ERROR ("Could not open ion driver");
+    GST_WARNING ("Could not open ion driver");
     g_object_unref (self);
     return;
   }
@@ -104,8 +115,8 @@ gst_ion_alloc_alloc (GstAllocator * allocator, gsize size,
   ion_size = size + params->prefix + params->padding;
   allocation_data.len = ion_size;
   allocation_data.align = params->align;
-  allocation_data.heap_id_mask = ION_HEAP_TYPE_DMA_MASK;
-  allocation_data.flags = 0;
+  allocation_data.heap_id_mask = 1 << self->heap_id;
+  allocation_data.flags = self->flags;
   if (gst_ion_ioctl (self->fd, ION_IOC_ALLOC, &allocation_data) < 0) {
     GST_ERROR ("ion allocate failed.");
     return NULL;
@@ -192,15 +203,66 @@ gst_ion_allocator_dispose (GObject * object)
 }
 
 static void
+gst_ion_allocator_set_property (GObject * object, guint prop_id,
+    const GValue * value, GParamSpec * pspec)
+{
+  GstIONAllocator *self = GST_ION_ALLOCATOR (object);
+
+  switch (prop_id) {
+    case PROP_HEAP_ID:
+      self->heap_id = g_value_get_uint (value);
+      break;
+    case PROP_FLAG:
+      self->flags = g_value_get_uint (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static void
+gst_ion_allocator_get_property (GObject * object, guint prop_id, GValue * value,
+    GParamSpec * pspec)
+{
+  GstIONAllocator *self = GST_ION_ALLOCATOR (object);
+
+  switch (prop_id) {
+    case PROP_HEAP_ID:
+      g_value_set_uint (value, self->heap_id);
+      break;
+    case PROP_FLAG:
+      g_value_set_uint (value, self->flags);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+  }
+}
+
+static void
 gst_ion_allocator_class_init (GstIONAllocatorClass * klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GstAllocatorClass *allocator_class = GST_ALLOCATOR_CLASS (klass);
   GstDmaBufAllocatorClass *dmabuf_allocator_class = GST_DMABUF_ALLOCATOR_CLASS (klass);
 
+  gobject_class->dispose = GST_DEBUG_FUNCPTR (gst_ion_allocator_dispose);
+  gobject_class->set_property = gst_ion_allocator_set_property;
+  gobject_class->get_property = gst_ion_allocator_get_property;
+
+  g_object_class_install_property (gobject_class, PROP_HEAP_ID,
+      g_param_spec_uint ("heap-id", "Heap ID",
+        "ION heap id", 0, G_MAXUINT32, DEFAULT_HEAP_ID,
+        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+  g_object_class_install_property (gobject_class, PROP_FLAG,
+      g_param_spec_uint ("flags", "Flags",
+        "ION memory flags", 0, G_MAXUINT32, DEFAULT_FLAG,
+        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
   allocator_class->alloc = GST_DEBUG_FUNCPTR (gst_ion_alloc_alloc);
   dmabuf_allocator_class->free = GST_DEBUG_FUNCPTR (gst_ion_alloc_free);
-  gobject_class->dispose = GST_DEBUG_FUNCPTR (gst_ion_allocator_dispose);
 
   GST_DEBUG_CATEGORY_INIT (ion_allocator_debug, "ionmemory", 0,
       "DMA FD memory allocator based on ion");
@@ -212,4 +274,7 @@ gst_ion_allocator_init (GstIONAllocator * self)
   GstAllocator *allocator = GST_ALLOCATOR (self);
 
   allocator->mem_type = GST_ALLOCATOR_ION;
+
+  self->heap_id = DEFAULT_HEAP_ID;
+  self->flags = DEFAULT_FLAG;
 }
