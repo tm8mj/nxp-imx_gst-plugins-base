@@ -5,8 +5,7 @@ libgstallocators_@GST_API_VERSION@_includedir = $(includedir)/gstreamer-@GST_API
 libgstallocators_@GST_API_VERSION@_include_HEADERS = \
 	allocators.h \
 	gstfdmemory.h \
-	gstdmabuf.h \
-	gstallocatorphymem.h
+	gstdmabuf.h
 
 if USE_ION
 libgstallocators_@GST_API_VERSION@_include_HEADERS += \
@@ -17,8 +16,7 @@ noinst_HEADERS =
 
 libgstallocators_@GST_API_VERSION@_la_SOURCES = \
 	gstfdmemory.c \
-	gstdmabuf.c \
-	gstallocatorphymem.c
+	gstdmabuf.c
 
 if USE_ION
 libgstallocators_@GST_API_VERSION@_la_SOURCES += \
