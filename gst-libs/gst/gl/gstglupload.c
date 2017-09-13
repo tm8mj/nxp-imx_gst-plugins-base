@@ -613,6 +613,7 @@ _dma_buf_upload_accept (gpointer impl, GstBuffer * buffer, GstCaps * in_caps,
   GstVideoInfo *out_info = &dmabuf->out_info;
   guint n_planes = GST_VIDEO_INFO_N_PLANES (in_info);
   GstVideoMeta *meta;
+  GstVideoCropMeta *crop;
   guint n_mem;
   GstMemory *mems[GST_VIDEO_MAX_PLANES];
   gsize offset[GST_VIDEO_MAX_PLANES];
@@ -621,6 +622,7 @@ _dma_buf_upload_accept (gpointer impl, GstBuffer * buffer, GstCaps * in_caps,
 
   n_mem = gst_buffer_n_memory (buffer);
   meta = gst_buffer_get_video_meta (buffer);
+  crop = gst_buffer_get_video_crop_meta(buffer);
 
   /* dmabuf upload is only supported with EGL contexts. */
   if (gst_gl_context_get_gl_platform (dmabuf->upload->context) !=
@@ -648,6 +650,15 @@ _dma_buf_upload_accept (gpointer impl, GstBuffer * buffer, GstCaps * in_caps,
       in_info->offset[i] = meta->offset[i];
       in_info->stride[i] = meta->stride[i];
     }
+  }
+  
+  if (crop) {
+    in_info->width = MIN (crop->width, in_info->width);
+    in_info->height = MIN (crop->height, in_info->height);
+
+    GST_DEBUG_OBJECT (dmabuf->upload, "got crop meta (%d)x(%d)",
+        in_info->width, in_info->height);
+    gst_buffer_remove_meta (buffer, (GstMeta *)crop);
   }
 
   if (out_caps != dmabuf->out_caps) {
