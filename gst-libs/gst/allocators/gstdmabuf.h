@@ -90,9 +90,6 @@ struct _GstDmaBufAllocatorClass
 {
   GstFdAllocatorClass parent_class;
 
-  /*< public >*/
-  void         (*free)       (GstAllocator *allocator, GstMemory *memory);
-
   /*< private >*/
   gpointer _gst_reserved[GST_PADDING];
 };

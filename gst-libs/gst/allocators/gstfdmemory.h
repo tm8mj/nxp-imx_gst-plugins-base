@@ -69,20 +69,11 @@ typedef enum {
 struct _GstFdAllocator
 {
   GstAllocator parent;
-
-  /*< private >*/
-  gpointer _gst_reserved[GST_PADDING];
 };
 
 struct _GstFdAllocatorClass
 {
   GstAllocatorClass parent_class;
-
-  /*< public >*/
-  void         (*free)       (GstAllocator *allocator, GstMemory *memory);
-
-  /*< private >*/
-  gpointer _gst_reserved[GST_PADDING];
 };
 
 GType gst_fd_allocator_get_type (void);
