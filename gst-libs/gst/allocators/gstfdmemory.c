@@ -97,9 +97,13 @@ gst_fd_mem_map (GstMemory * gmem, gsize maxsize, GstMapFlags flags)
     if ((mem->mmapping_flags & prot) == prot) {
       ret = mem->data;
       mem->mmap_count++;
+      goto out;
+    } else {
+      /* if mapping flags is not a subset, need unmap first */
+      munmap ((void *) mem->data, gmem->maxsize);
+      mem->data = NULL;
+      mem->mmap_count = 0;;
     }
-
-    goto out;
   }
 
   if (mem->fd != -1) {
