@@ -44,6 +44,7 @@ struct _GstHdr10Meta
   guint colourPrimaries;
   guint transferCharacteristics;
   guint matrixCoeffs;
+  guint fullRange;
   guint chromaSampleLocTypeTopField;
   guint chromaSampleLocTypeBottomField;
 };
