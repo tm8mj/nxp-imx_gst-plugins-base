@@ -34,6 +34,7 @@ DIST_SUBDIRS = \
 	gl
 
 noinst_HEADERS = gettext.h gst-i18n-app.h gst-i18n-plugin.h glib-compat-private.h
+include_HEADERS = gstimxcommon.h
 
 # dependencies:
 audio: tag
