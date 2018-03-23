@@ -7,14 +7,16 @@ libgstallocators_@GST_API_VERSION@_include_HEADERS = \
 	allocators-prelude.h \
 	gstfdmemory.h \
 	gstphysmemory.h \
-	gstdmabuf.h
+	gstdmabuf.h \
+	gstdmabufmeta.h
 
 noinst_HEADERS =
 
 libgstallocators_@GST_API_VERSION@_la_SOURCES = \
 	gstfdmemory.c \
 	gstphysmemory.c \
-	gstdmabuf.c 
+	gstdmabuf.c \
+	gstdmabufmeta.c
 
 libgstallocators_@GST_API_VERSION@_la_LIBADD = $(GST_LIBS) $(LIBM)
 libgstallocators_@GST_API_VERSION@_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS)
