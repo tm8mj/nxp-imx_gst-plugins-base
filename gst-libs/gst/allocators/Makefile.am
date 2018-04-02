@@ -8,7 +8,8 @@ libgstallocators_@GST_API_VERSION@_include_HEADERS = \
 	gstfdmemory.h \
 	gstphysmemory.h \
 	gstdmabuf.h \
-	gstdmabufmeta.h
+	gstdmabufmeta.h \
+	gstphymemmeta.h
 
 if USE_ION
 libgstallocators_@GST_API_VERSION@_include_HEADERS += \
@@ -21,14 +22,15 @@ libgstallocators_@GST_API_VERSION@_la_SOURCES = \
 	gstfdmemory.c \
 	gstphysmemory.c \
 	gstdmabuf.c \
-	gstdmabufmeta.c
+	gstdmabufmeta.c \
+	gstphymemmeta.c
 
 if USE_ION
 libgstallocators_@GST_API_VERSION@_la_SOURCES += \
  gstionmemory.c
 endif
 
-libgstallocators_@GST_API_VERSION@_la_LIBADD = $(GST_LIBS) $(LIBM)
+libgstallocators_@GST_API_VERSION@_la_LIBADD = $(GST_LIBS) $(LIBM) $(top_builddir)/gst-libs/gst/video/libgstvideo-@GST_API_VERSION@.la
 libgstallocators_@GST_API_VERSION@_la_CFLAGS = $(GST_PLUGINS_BASE_CFLAGS) $(GST_CFLAGS) -DBUILDING_GST_ALLOCATORS
 libgstallocators_@GST_API_VERSION@_la_LDFLAGS = $(GST_LIB_LDFLAGS) $(GST_ALL_LDFLAGS) $(GST_LT_LDFLAGS)
 
