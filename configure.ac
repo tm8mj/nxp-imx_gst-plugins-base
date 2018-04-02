@@ -678,6 +678,14 @@ AG_GST_CHECK_FEATURE(CDPARANOIA, [CDParanoia], cdparanoia, [
     AC_SUBST(CDPARANOIA_LIBS)
   ])
 ])
+
+
+dnl check for ion
+translit(dnm, m, l) AM_CONDITIONAL(USE_ION, true)
+AG_GST_CHECK_FEATURE(ION, [ion], ion, [
+  AC_CHECK_HEADER(linux/ion.h, HAVE_ION="yes", HAVE_ION="no")
+])
+
 dnl FIXME : add second check somehow if that is necessary
 dnl AC_CHECK_LIB(cdda_paranoia, paranoia_init, : , HAVE_CDPARANOIA=no, -lcdda_interface )
 dnl AC_CHECK_HEADER(cdda_paranoia.h, :, HAVE_CDPARANOIA=no)
