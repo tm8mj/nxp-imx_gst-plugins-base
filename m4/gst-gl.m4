@@ -288,7 +288,7 @@ case $host in
     LIBS=$old_LIBS
     CFLAGS=$old_CFLAGS
 
-    PKG_CHECK_MODULES(WAYLAND_EGL, wayland-client >= 1.0 wayland-cursor >= 1.0 wayland-egl >= 9.0 wayland-protocols >= 1.15, HAVE_WAYLAND_EGL=yes, HAVE_WAYLAND_EGL=no)
+    PKG_CHECK_MODULES(WAYLAND_EGL, wayland-client >= 1.0 wayland-cursor >= 1.0 wayland-egl >= 1.0 wayland-protocols >= 1.15, HAVE_WAYLAND_EGL=yes, HAVE_WAYLAND_EGL=no)
     AC_CHECK_PROGS(WAYLAND_SCANNER, wayland-scanner)
     if test x"$HAVE_WAYLAND_EGL" == xyes ; then
       if test x"$WAYLAND_SCANNER" == x ; then
