@@ -9,7 +9,8 @@ libgstallocators_@GST_API_VERSION@_include_HEADERS = \
 	gstphysmemory.h \
 	gstdmabuf.h \
 	gstdmabufmeta.h \
-  gstphymemmeta.h
+  gstphymemmeta.h \
+  gstallocatorphymem.h
 
 if USE_ION
 libgstallocators_@GST_API_VERSION@_include_HEADERS += \
@@ -23,7 +24,8 @@ libgstallocators_@GST_API_VERSION@_la_SOURCES = \
 	gstphysmemory.c \
 	gstdmabuf.c \
 	gstdmabufmeta.c \
-  gstphymemmeta.c
+  gstphymemmeta.c \
+  gstallocatorphymem.c
 
 if USE_ION
 libgstallocators_@GST_API_VERSION@_la_SOURCES += \
