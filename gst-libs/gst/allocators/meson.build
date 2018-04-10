@@ -6,6 +6,7 @@ gst_allocators_headers = [
   'gstdmabuf.h',
   'gstdmabufmeta.h',
   'gstphymemmeta.h',
+  'gstallocatorphymem.h',
 ]
 
 gst_ionallocator_headers = []
@@ -22,7 +23,7 @@ endif
 
 install_headers(gst_allocators_headers, subdir : 'gstreamer-1.0/gst/allocators/')
 
-gst_allocators_sources = [ 'gstdmabuf.c', 'gstfdmemory.c', 'gstphysmemory.c', 'gstdmabufmeta.c', 'gstphymemmeta.c']
+gst_allocators_sources = [ 'gstdmabuf.c', 'gstfdmemory.c', 'gstphysmemory.c', 'gstdmabufmeta.c', 'gstphymemmeta.c', 'gstallocatorphymem.c']
 gstallocators = library('gstallocators-@0@'.format(api_version),
   gst_allocators_sources, gst_ionallocator_sources,
   c_args : gst_plugins_base_args + ['-DBUILDING_GST_ALLOCATORS'],
