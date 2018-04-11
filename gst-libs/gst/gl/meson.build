@@ -137,6 +137,7 @@ glconf_options = [
 
     'GST_GL_HAVE_DMABUF',
     'GST_GL_HAVE_VIV_DIRECTVIV',
+    'GST_GL_HAVE_PHYMEM',
 
     'GST_GL_HAVE_GLEGLIMAGEOES',
     'GST_GL_HAVE_GLCHAR',
@@ -908,9 +909,10 @@ if need_win_gbm != 'no'
   endif
 endif
 
+gles2_lib_dep = cc.find_library('GLESv2', required : false)
 if need_platform_egl != 'no' and need_win_viv_fb != 'no'
   if egl_dep.found() and cc.has_function ('fbGetDisplay', dependencies : egl_dep)
-    if cc.has_function ('glTexDirectVIV', dependencies : gles2_dep)
+    if cc.has_function ('glTexDirectVIV', dependencies : gles2_lib_dep)
       enabled_gl_winsys += 'viv-fb'
       glconf.set('GST_GL_HAVE_WINDOW_VIV_FB', 1)
       glconf.set('GST_GL_HAVE_VIV_DIRECTVIV', 1)
@@ -921,6 +923,18 @@ if need_platform_egl != 'no' and need_win_viv_fb != 'no'
       gl_cpp_args += ['-DEGL_API_FB']
     endif
   endif
+endif
+
+g2d_dep = unneeded_dep
+if cc.has_function ('glTexDirectVIV', dependencies : gles2_lib_dep) and cc.check_header('g2d.h')
+  gl_sources += [
+    'gstglphymemory.c',
+  ]
+  gl_headers += [
+    'gstglphymemory.h',
+  ]
+  glconf.set10('GST_GL_HAVE_PHYMEM', 1)
+  g2d_dep = cc.find_library('g2d', required : false)
 endif
 
 if need_win_android == 'yes'
@@ -1050,7 +1064,8 @@ if build_gstgl
     darwin_versions : osxversion,
     install : true,
     dependencies : [gst_base_dep, video_dep, allocators_dep, gmodule_dep,
-                    gl_lib_deps, gl_platform_deps, gl_winsys_deps, gl_misc_deps],
+                    gl_lib_deps, gl_platform_deps, gl_winsys_deps, gl_misc_deps,
+                    g2d_dep],
     # don't confuse EGL/egl.h with gst-libs/gl/egl/egl.h on case-insensitive file systems
     implicit_include_directories : false)
 
