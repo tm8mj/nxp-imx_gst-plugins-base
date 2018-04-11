@@ -90,6 +90,13 @@ GstEGLImage *           gst_egl_image_from_dmabuf               (GstGLContext * 
                                                                  gsize offset);
 GST_GL_API
 gboolean                gst_egl_image_export_dmabuf             (GstEGLImage *image, int *fd, gint *stride, gsize *offset);
+
+GST_GL_API
+GstEGLImage *           gst_egl_image_from_dmabuf_singleplaner  (GstGLContext * context,
+                                                                 GstMemory ** mems,
+                                                                 GstVideoInfo * in_info,
+                                                                 gint n_planes,
+                                                                 gsize * offset);
 #endif
 
 /**
