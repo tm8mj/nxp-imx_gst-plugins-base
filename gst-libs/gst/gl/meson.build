@@ -133,6 +133,7 @@ glconf_options = [
     'GST_GL_HAVE_DMABUF',
     'GST_GL_HAVE_VIV_DIRECTVIV',
     'GST_GL_HAVE_PHYMEM',
+    'GST_GL_HAVE_IONDMA',
 
     'GST_GL_HAVE_GLEGLIMAGEOES',
     'GST_GL_HAVE_GLCHAR',
@@ -553,6 +554,9 @@ if need_platform_egl != 'no'
     if cc.has_header('libdrm/drm_fourcc.h')
       gl_misc_deps += allocators_dep
       glconf.set10('GST_GL_HAVE_DMABUF', 1)
+      if cc.has_header('linux/ion.h')
+        glconf.set10('GST_GL_HAVE_IONDMA', 1)
+      endif
     endif
 
     egl_includes = '''
