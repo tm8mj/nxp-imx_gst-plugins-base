@@ -119,6 +119,7 @@ typedef enum {
 #define HAS_DCSS() check_feature(imx_chip_code(), DCSS)
 
 #define IS_HANTRO() ((CC_MX8M == imx_chip_code()) || (CC_MX8MM == imx_chip_code()) )
+#define IS_IMX8MM() (CC_MX8MM == imx_chip_code())
 #define IS_AMPHION() (CC_MX8QXP == imx_chip_code())
 
 
