@@ -27,6 +27,9 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <linux/ion.h>
+#include <linux/dma-buf.h>
+#include <linux/version.h>
+
 
 #include <gst/allocators/gstdmabuf.h>
 #include "gstphysmemory.h"
@@ -72,12 +75,12 @@ gst_ion_allocator_get_phys_addr (GstPhysMemoryAllocator *allocator, GstMemory *m
 
   GST_DEBUG ("ion DMA FD: %d", fd);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 34)
   struct ion_phys_dma_data data = {
     .phys = 0,
     .size = 0,
     .dmafd = fd,
   };
-
   struct ion_custom_data custom = {
     .cmd = ION_IOC_PHYS_DMA,
     .arg = (unsigned long)&data,
@@ -88,6 +91,15 @@ gst_ion_allocator_get_phys_addr (GstPhysMemoryAllocator *allocator, GstMemory *m
     return 0;
 
   return data.phys;
+#else
+  struct dma_buf_phys dma_phys;
+
+  ret = ioctl(fd, DMA_BUF_IOCTL_PHYS, &dma_phys);
+  if (ret < 0)
+    return 0;
+
+  return dma_phys.phys;
+#endif
 }
 
 static void gst_ion_allocator_iface_init(gpointer g_iface)
@@ -149,6 +161,7 @@ gst_ion_alloc_alloc (GstAllocator * allocator, gsize size,
     GstAllocationParams * params)
 {
   GstIONAllocator *self = GST_ION_ALLOCATOR (allocator);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 34)
   struct ion_allocation_data allocation_data = { 0 };
   struct ion_fd_data fd_data = { 0 };
   struct ion_handle_data handle_data = { 0 };
@@ -185,6 +198,53 @@ gst_ion_alloc_alloc (GstAllocator * allocator, gsize size,
   handle_data.handle = ion_handle;
   gst_ion_ioctl (self->fd, ION_IOC_FREE, &handle_data);
 
+#else
+  gint heapCnt = 0;
+  gint heap_mask = 0;
+  GstMemory *mem;
+  gsize ion_size;
+  gint dma_fd = -1;
+  gint ret;
+
+  struct ion_heap_query query;
+  memset(&query, 0, sizeof(query));
+  ret = gst_ion_ioctl (self->fd, ION_IOC_HEAP_QUERY, &query);
+  if (ret != 0 || query.cnt == 0) {
+    GST_ERROR ("can't query heap count");
+    return NULL;
+  }
+  heapCnt = query.cnt;
+
+  struct ion_heap_data ihd[heapCnt];
+  memset(&ihd, 0, sizeof(ihd));
+  query.cnt = heapCnt;
+  query.heaps = &ihd;
+  ret = gst_ion_ioctl (self->fd, ION_IOC_HEAP_QUERY, &query);
+  if (ret != 0) {
+    GST_ERROR ("can't get ion heaps");
+    return NULL;
+  }
+
+  for (gint i=0; i<heapCnt; i++) {
+    if (ihd[i].type == ION_HEAP_TYPE_DMA) {
+      heap_mask |=  1 << ihd[i].heap_id;
+    }
+  }
+
+  ion_size = size + params->prefix + params->padding;
+  struct ion_allocation_data data = {
+    .len = ion_size,
+    .heap_id_mask = heap_mask,
+    .flags = self->flags,
+  };
+  ret = gst_ion_ioctl (self->fd, ION_IOC_ALLOC, &data);
+  if (ret < 0) {
+    GST_ERROR ("ion allocate failed.");
+    return NULL;
+  }
+  dma_fd = data.fd;
+#endif
+
   mem = gst_dmabuf_allocator_alloc (allocator, dma_fd, size);
 
   GST_DEBUG ("ion allocated size: %" G_GSIZE_FORMAT "DMA FD: %d", ion_size,
@@ -196,8 +256,10 @@ bail:
   if (dma_fd >= 0) {
     close (dma_fd);
   }
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 34)
   handle_data.handle = ion_handle;
   gst_ion_ioctl (self->fd, ION_IOC_FREE, &handle_data);
+#endif
 
   return NULL;
 }
