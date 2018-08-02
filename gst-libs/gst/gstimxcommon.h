@@ -119,8 +119,11 @@ typedef enum {
 #define HAS_DCSS() check_feature(imx_chip_code(), DCSS)
 
 #define IS_HANTRO() ((CC_MX8M == imx_chip_code()) || (CC_MX8MM == imx_chip_code()) )
-#define IS_IMX8MM() (CC_MX8MM == imx_chip_code())
 #define IS_AMPHION() (CC_MX8QXP == imx_chip_code())
+#define IS_IMX8MM() (CC_MX8MM == imx_chip_code())
+#define IS_IMX8MQ() (CC_MX8M == imx_chip_code())
+#define IS_IMX8Q() ((CC_MX8QM == imx_chip_code()) || (CC_MX8QXP == imx_chip_code()))
+#define IS_IMX6Q() (CC_MX6Q == imx_chip_code())
 
 
 /* define rotate and flip glib enum for overlaysink and imxv4l2sink */
