@@ -119,7 +119,7 @@ typedef enum {
 #define HAS_DCSS() check_feature(imx_chip_code(), DCSS)
 
 #define IS_HANTRO() ((CC_MX8M == imx_chip_code()) || (CC_MX8MM == imx_chip_code()) )
-#define IS_AMPHION() (CC_MX8QXP == imx_chip_code())
+#define IS_AMPHION() ((CC_MX8QM == imx_chip_code()) || (CC_MX8QXP == imx_chip_code()))
 #define IS_IMX8MM() (CC_MX8MM == imx_chip_code())
 #define IS_IMX8MQ() (CC_MX8M == imx_chip_code())
 #define IS_IMX8Q() ((CC_MX8QM == imx_chip_code()) || (CC_MX8QXP == imx_chip_code()))
@@ -314,7 +314,7 @@ static IMXV4l2FeatureMap g_imxv4l2feature_maps[] = {
   {CC_MX7D, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE},
   {CC_MX7ULP, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE},
   {CC_MX8, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE},
-  {CC_MX8QM, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE},
+  {CC_MX8QM, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, FALSE},
   {CC_MX8QXP, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, FALSE},
   {CC_MX8M, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE},
   {CC_MX8MM, TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE},
