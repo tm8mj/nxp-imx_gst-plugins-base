@@ -75,7 +75,7 @@ gst_ion_allocator_get_phys_addr (GstPhysMemoryAllocator *allocator, GstMemory *m
 
   GST_DEBUG ("ion DMA FD: %d", fd);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 34)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
   struct ion_phys_dma_data data = {
     .phys = 0,
     .size = 0,
@@ -161,7 +161,7 @@ gst_ion_alloc_alloc (GstAllocator * allocator, gsize size,
     GstAllocationParams * params)
 {
   GstIONAllocator *self = GST_ION_ALLOCATOR (allocator);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 34)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
   struct ion_allocation_data allocation_data = { 0 };
   struct ion_fd_data fd_data = { 0 };
   struct ion_handle_data handle_data = { 0 };
@@ -256,7 +256,7 @@ bail:
   if (dma_fd >= 0) {
     close (dma_fd);
   }
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 34)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)
   handle_data.handle = ion_handle;
   gst_ion_ioctl (self->fd, ION_IOC_FREE, &handle_data);
 #endif
