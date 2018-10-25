@@ -24,6 +24,7 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 
 #include "gl.h"
 #include "gstglupload.h"
@@ -45,6 +46,10 @@
 
 #if GST_GL_HAVE_IONDMA
 #include <gst/allocators/gstionmemory.h>
+#endif
+
+#if GST_GL_HAVE_PHYMEM
+#include "gstglphymemory.h"
 #endif
 
 /**
@@ -1437,6 +1442,7 @@ struct DirectVIVUpload
       GLenum Format, GLvoid ** Logical, const GLuint * Physical);
   void (*TexDirectInvalidateVIV) (GLenum Target);
   gboolean loaded_functions;
+  GstBufferPool *pool;
 };
 
 #define GST_GL_DIRECTVIV_FORMAT "{RGBA, I420, YV12, NV12, NV21, YUY2, UYVY, BGRA, RGB16}"
@@ -1452,6 +1458,71 @@ _directviv_upload_new (GstGLUpload * upload)
   directviv->loaded_functions = FALSE;
 
   return directviv;
+}
+
+static gboolean
+_directviv_upload_setup_buffer_pool (GstBufferPool **pool, GstAllocator *allocator,
+    GstCaps *caps, GstVideoInfo *info)
+{
+  GstAllocationParams params;
+  GstStructure *config;
+  gsize size;
+  guint width, height;
+  GstVideoAlignment alignment;
+
+  g_return_val_if_fail (caps != NULL && info != NULL, FALSE);
+
+  width = GST_VIDEO_INFO_WIDTH (info);
+  height = GST_VIDEO_INFO_HEIGHT (info);
+
+  gst_allocation_params_init (&params);
+
+  /* if user not provide an allocator, then use default physical allocator*/
+  if (!allocator) {
+#if GST_GL_HAVE_PHYMEM
+    allocator = gst_phy_mem_allocator_obtain ();
+#endif
+  }
+
+  if (!allocator) {
+    GST_WARNING ("Cannot get available allocator");
+    return FALSE;
+  }
+  GST_DEBUG ("got allocator(%p).", allocator);
+
+  if (*pool)
+    gst_object_unref(*pool);
+
+  *pool = gst_video_buffer_pool_new ();
+  if (!*pool) {
+    GST_WARNING ("New video buffer pool failed.");
+    return FALSE;
+  }
+  GST_DEBUG ("create buffer pool(%p).", *pool);
+
+  config = gst_buffer_pool_get_config (*pool);
+
+  /* configure alignment for eglimage to import this dma-fd buffer */
+  memset (&alignment, 0, sizeof (GstVideoAlignment));
+  alignment.padding_right = GST_ROUND_UP_N(width, DEFAULT_ALIGN) - width;
+  GST_DEBUG ("align buffer pool, w(%d) h(%d), padding_right (%d), padding_bottom (%d)",
+      width, height, alignment.padding_right, alignment.padding_bottom);
+
+  /* the normal size of a frame */
+  size = info->size;
+  gst_buffer_pool_config_set_params (config, caps, size, 0, 30);
+  gst_buffer_pool_config_add_option (config, GST_BUFFER_POOL_OPTION_VIDEO_META);
+  gst_buffer_pool_config_add_option (config, GST_BUFFER_POOL_OPTION_VIDEO_ALIGNMENT);
+  gst_buffer_pool_config_set_video_alignment (config, &alignment);
+  gst_buffer_pool_config_set_allocator (config, allocator, &params);
+
+  if (!gst_buffer_pool_set_config (*pool, config)) {
+    GST_WARNING ("buffer pool config failed.");
+    gst_object_unref (*pool);
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 static GstCaps *
@@ -1500,6 +1571,22 @@ _directviv_upload_transform_caps (gpointer impl, GstGLContext * context,
   return ret;
 }
 
+static gboolean
+_directviv_upload_buffer_pool_is_ok (GstBufferPool * pool, GstCaps * newcaps,
+    gint size)
+{
+  GstCaps *oldcaps;
+  GstStructure *config;
+  guint bsize;
+  gboolean ret;
+
+  config = gst_buffer_pool_get_config (pool);
+  gst_buffer_pool_config_get_params (config, &oldcaps, &bsize, NULL, NULL);
+  ret = (size <= bsize) && gst_caps_is_equal (newcaps, oldcaps);
+  gst_structure_free (config);
+
+  return ret;
+}
 
 static void
 _directviv_upload_load_functions_gl_thread (GstGLContext * context,
@@ -1550,13 +1637,119 @@ _directviv_upload_accept (gpointer impl, GstBuffer * buffer, GstCaps * in_caps,
     mem = NULL;
   }
 
+#if GST_GL_HAVE_PHYMEM
+  GstVideoInfo *in_info = &directviv->upload->priv->in_info;
+  GstVideoFormat fmt = GST_VIDEO_INFO_FORMAT (&directviv->upload->priv->out_info);
+  if (fmt != GST_VIDEO_FORMAT_RGBA)
+    return FALSE;
+
+  if (n_mem != 1 || !mem || !gst_is_phys_memory (mem)) {
+    GstVideoFrame frame1, frame2;
+    GstCaps *new_caps;
+    GstVideoInfo info;
+
+    gst_video_frame_map (&frame1, in_info, buffer, GST_MAP_READ);
+    new_caps = gst_video_info_to_caps(&frame1.info);
+    gst_video_info_from_caps(&info, new_caps);
+
+    if (!directviv->pool || !_directviv_upload_buffer_pool_is_ok (directviv->pool,new_caps,info.size)) {
+      gboolean ret;
+      if (directviv->pool) {
+        gst_object_unref(directviv->pool);
+        directviv->pool = NULL;
+      }
+
+      ret = _directviv_upload_setup_buffer_pool (&directviv->pool, NULL, new_caps, in_info);
+      if (!ret) {
+        gst_video_frame_unmap (&frame1);
+        gst_caps_unref (new_caps);
+        GST_WARNING_OBJECT (directviv->upload, "no available buffer pool");
+        return FALSE;
+      }
+    }
+
+    if (!gst_buffer_pool_is_active (directviv->pool)
+        && gst_buffer_pool_set_active (directviv->pool, TRUE) != TRUE) {
+      gst_video_frame_unmap (&frame1);
+      GST_WARNING_OBJECT (directviv->upload, "buffer pool is not ok");
+      return FALSE;
+    }
+
+    if (directviv->inbuf)
+      gst_buffer_unref(directviv->inbuf);
+    directviv->inbuf = NULL;
+
+    gst_buffer_pool_acquire_buffer (directviv->pool, &directviv->inbuf, NULL);
+    if (!directviv->inbuf) {
+      gst_video_frame_unmap (&frame1);
+      GST_WARNING_OBJECT (directviv->upload, "acquire_buffer failed");
+      return FALSE;
+    }
+
+    GST_DEBUG_OBJECT (directviv->upload, "copy plane resolution (%d)x(%d)\n", in_info->width, in_info->height);
+    gst_video_frame_map (&frame2, in_info, directviv->inbuf, GST_MAP_WRITE);
+    gst_video_frame_copy (&frame2, &frame1);
+    gst_video_frame_unmap (&frame1);
+    gst_video_frame_unmap (&frame2);
+  }
+
+  return TRUE;
+#else
   return n_mem == 1 && mem && gst_is_phys_memory (mem);
+#endif
 }
 
 static void
 _directviv_upload_propose_allocation (gpointer impl, GstQuery * decide_query,
     GstQuery * query)
 {
+#if GST_GL_HAVE_PHYMEM == 1 && GST_GL_HAVE_IONDMA == 0
+  struct DirectVIVUpload *directviv = impl;
+  GstBufferPool *pool = NULL;
+  GstAllocator *allocator = NULL;
+  GstCaps *caps;
+  GstVideoInfo info;
+  GstVideoFormat fmt;
+
+  fmt = GST_VIDEO_INFO_FORMAT (&directviv->upload->priv->out_info);
+
+  if (fmt != GST_VIDEO_FORMAT_RGBA)
+    return;
+
+  gst_query_parse_allocation (query, &caps, NULL);
+
+  if (!gst_video_info_from_caps (&info, caps))
+    goto invalid_caps;
+
+  allocator = gst_phy_mem_allocator_obtain ();
+  if (!allocator) {
+    GST_WARNING ("New physical memory allocator failed.");
+    return;
+  }
+  GST_DEBUG ("create physical memory allocator(%p).", allocator);
+
+  gst_query_add_allocation_param (query, allocator, NULL);
+
+  if (!_directviv_upload_setup_buffer_pool (&pool, allocator, caps, &info))
+    goto setup_failed;
+
+  gst_query_set_nth_allocation_pool (query, 0, pool, info.size, 1, 30);
+
+  if (pool)
+    gst_object_unref (pool);
+
+  return;
+invalid_caps:
+  {
+    GST_WARNING_OBJECT (directviv->upload, "invalid caps specified");
+    return;
+  }
+setup_failed:
+  {
+    GST_WARNING_OBJECT (directviv->upload, "failed to setup buffer pool");
+    return;
+  }
+#endif
 }
 
 static GLenum
@@ -1695,11 +1888,14 @@ _directviv_upload_perform (gpointer impl, GstBuffer * buffer,
 {
   struct DirectVIVUpload *directviv = impl;
 
-  directviv->inbuf = buffer;
+  if (!directviv->inbuf)
+    directviv->inbuf = buffer;
   directviv->outbuf = NULL;
   gst_gl_context_thread_add (directviv->upload->context,
       (GstGLContextThreadFunc) _directviv_upload_perform_gl_thread, directviv);
-  directviv->inbuf = NULL;
+
+  if (directviv->inbuf == buffer)
+    directviv->inbuf = NULL;
 
   if (!directviv->outbuf)
     return GST_GL_UPLOAD_ERROR;
