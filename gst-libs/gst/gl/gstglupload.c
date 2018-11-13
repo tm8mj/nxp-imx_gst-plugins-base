@@ -1657,7 +1657,7 @@ static void
 _directviv_upload_propose_allocation (gpointer impl, GstQuery * decide_query,
     GstQuery * query)
 {
-#if GST_GL_HAVE_PHYMEM == 1 && GST_GL_HAVE_IONDMA == 0
+#if GST_GL_HAVE_PHYMEM
   struct DirectVIVUpload *directviv = impl;
   GstBufferPool *pool = NULL;
   GstAllocator *allocator = NULL;
@@ -1669,6 +1669,16 @@ _directviv_upload_propose_allocation (gpointer impl, GstQuery * decide_query,
 
   if (fmt != GST_VIDEO_FORMAT_RGBA)
     return;
+
+#if GST_GL_HAVE_IONDMA
+  /* physical memory buffer pool was only proposed
+   * when ion is not available to avoid allocator
+   * overwrite in allocation query, we need keep use
+   * ion when it is available */
+  allocator = gst_ion_allocator_obtain ();
+  if (allocator)
+    return;
+#endif
 
   gst_query_parse_allocation (query, &caps, NULL);
 
