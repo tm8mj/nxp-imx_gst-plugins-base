@@ -335,6 +335,10 @@ gst_video_frame_copy_plane (GstVideoFrame * dest, const GstVideoFrame * src,
     w = MIN (GST_VIDEO_INFO_PLANE_STRIDE (dinfo, plane),
         GST_VIDEO_INFO_PLANE_STRIDE (sinfo, plane));
 
+  if (GST_VIDEO_FRAME_FORMAT (dest) == GST_VIDEO_FORMAT_NV12_10LE) {
+    w = (plane == 0 ? 1 : 2) * GST_VIDEO_FRAME_COMP_WIDTH (dest,plane) * 5 / 4;
+  }
+
   h = GST_VIDEO_FRAME_COMP_HEIGHT (dest, plane);
 
   ss = GST_VIDEO_INFO_PLANE_STRIDE (sinfo, plane);
