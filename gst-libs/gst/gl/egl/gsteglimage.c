@@ -474,6 +474,55 @@ gst_egl_image_from_dmabuf (GstGLContext * context,
       (GstEGLImageDestroyNotify) _destroy_egl_image);
 }
 
+static int
+_drm_fourcc_from_video_info (GstVideoInfo * info)
+{
+  GstVideoFormat fmt = GST_VIDEO_INFO_FORMAT (info);
+
+  GST_DEBUG ("Getting DRM fourcc for %s",
+      gst_video_format_to_string (fmt));
+
+  if (GST_VIDEO_INFO_IS_YUV(info)) {
+    gint fourcc;
+    fourcc = gst_video_format_to_fourcc (fmt);
+
+    /* gstreamer fourcc is not compatible with DRM FOURCC*/
+    if(fmt == GST_VIDEO_FORMAT_I420)
+      fourcc = DRM_FORMAT_YUV420;
+    if(fmt == GST_VIDEO_FORMAT_YUY2)
+      fourcc = DRM_FORMAT_YUYV;
+
+    return fourcc;
+  }
+
+  switch (fmt) {
+    case GST_VIDEO_FORMAT_RGB16:
+      return DRM_FORMAT_RGB565;
+    case GST_VIDEO_FORMAT_BGR16:
+      return DRM_FORMAT_BGR565;
+    case GST_VIDEO_FORMAT_RGBA:
+      return DRM_FORMAT_ABGR8888;
+    case GST_VIDEO_FORMAT_RGBx:
+      return DRM_FORMAT_XBGR8888;
+    case GST_VIDEO_FORMAT_BGRA:
+      return DRM_FORMAT_ARGB8888;
+    case GST_VIDEO_FORMAT_BGRx:
+      return DRM_FORMAT_XRGB8888;
+    case GST_VIDEO_FORMAT_ARGB:
+      return DRM_FORMAT_BGRA8888;
+    case GST_VIDEO_FORMAT_xRGB:
+      return DRM_FORMAT_BGRX8888;
+    case GST_VIDEO_FORMAT_ABGR:
+      return DRM_FORMAT_RGBA8888;
+    case GST_VIDEO_FORMAT_xBGR:
+      return DRM_FORMAT_RGBX8888;
+
+    default:
+      GST_ERROR ("Unsupported format for DMABuf.");
+      return -1;
+  }
+}
+
 GstEGLImage *
 gst_egl_image_from_dmabuf_singleplaner (GstGLContext * context,
     GstMemory ** mems, GstVideoInfo * in_info, gint n_planes, gsize * offset)
@@ -499,17 +548,7 @@ gst_egl_image_from_dmabuf_singleplaner (GstGLContext * context,
   };
   EGLImageKHR img = EGL_NO_IMAGE_KHR;
 
-  fourcc = _drm_fourcc_from_info (in_info, 0);
-
-  if(GST_VIDEO_INFO_IS_YUV(in_info)) {
-    fourcc = gst_video_format_to_fourcc (GST_VIDEO_INFO_FORMAT(in_info));
-
-    /* gstreamer fourcc is not compatible with DRM FOURCC*/
-    if(GST_VIDEO_INFO_FORMAT(in_info) == GST_VIDEO_FORMAT_I420)
-      fourcc = DRM_FORMAT_YUV420;
-    if(GST_VIDEO_INFO_FORMAT(in_info) == GST_VIDEO_FORMAT_YUY2)
-      fourcc = DRM_FORMAT_YUYV;
-  }
+  fourcc = _drm_fourcc_from_video_info (in_info);
 
   GST_DEBUG ("fourcc %.4s (%d) n_planes %d (%dx%d)",
       (char *) &fourcc, fourcc, n_planes,
