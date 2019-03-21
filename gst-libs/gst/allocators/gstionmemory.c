@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016, Freescale Semiconductor, Inc. All rights reserved.
- * Copyright 2017 NXP
+ * Copyright 2017, 2019 NXP
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -218,7 +219,7 @@ gst_ion_alloc_alloc (GstAllocator * allocator, gsize size,
   struct ion_heap_data ihd[heapCnt];
   memset(&ihd, 0, sizeof(ihd));
   query.cnt = heapCnt;
-  query.heaps = &ihd;
+  query.heaps = (uintptr_t)&ihd;
   ret = gst_ion_ioctl (self->fd, ION_IOC_HEAP_QUERY, &query);
   if (ret != 0) {
     GST_ERROR ("can't get ion heaps");
