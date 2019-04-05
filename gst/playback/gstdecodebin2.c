@@ -247,7 +247,10 @@ enum
 
 /* when playing, keep a max of 2MB of data but try to keep the number of buffers
  * as low as possible (try to aim for 5 buffers) */
-#define AUTO_PLAY_SIZE_BYTES        2 * 1024 * 1024
+
+/* enlarge the max-size-bytes from 2M to 10M to avoid file-based mode and
+ * long-depth interleaved stream preroll fail. */
+#define AUTO_PLAY_SIZE_BYTES        10 * 1024 * 1024
 #define AUTO_PLAY_SIZE_BUFFERS      5
 #define AUTO_PLAY_SIZE_TIME         0
 
