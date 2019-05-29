@@ -453,8 +453,14 @@ gst_gl_context_egl_choose_config (GstGLContextEGL * egl, GstGLAPI gl_api,
 
   if (eglChooseConfig (egl->egl_display, config_attrib,
           &egl->egl_config, 1, &numConfigs)) {
-    GST_INFO ("config set: %" G_GUINTPTR_FORMAT ", %u",
-        (guintptr) egl->egl_config, (unsigned int) numConfigs);
+    if (numConfigs > 0) {
+      GST_INFO ("config set: %" G_GUINTPTR_FORMAT ", %u",
+          (guintptr) egl->egl_config, (unsigned int) numConfigs);
+    } else {
+      g_set_error (error, GST_GL_CONTEXT_ERROR,
+          GST_GL_CONTEXT_ERROR_WRONG_CONFIG, "no match config");
+      goto failure;
+    }
   } else {
     g_set_error (error, GST_GL_CONTEXT_ERROR, GST_GL_CONTEXT_ERROR_WRONG_CONFIG,
         "Failed to set window configuration: %s",
