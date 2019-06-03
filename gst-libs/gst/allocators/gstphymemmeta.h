@@ -23,6 +23,7 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <gst/video/gstvideometa.h>
+#include <gst/allocators/allocators-prelude.h>
 #include "gstphymemmeta.h"
 
 G_BEGIN_DECLS
@@ -45,10 +46,10 @@ struct _GstPhyMemMeta
   guint rfc_chroma_offset;
 };
 
-GST_EXPORT
+GST_ALLOCATORS_API
 GType gst_phy_mem_meta_api_get_type(void);
 
-GST_EXPORT
+GST_ALLOCATORS_API
 GstMetaInfo const * gst_phy_mem_meta_get_info(void);
 
 G_END_DECLS

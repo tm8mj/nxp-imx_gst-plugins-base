@@ -24,6 +24,7 @@
 #include <gst/gstmeta.h>
 #include <gst/gstquery.h>
 #include <gst/gstvalue.h>
+#include <gst/allocators/allocators-prelude.h>
 
 G_BEGIN_DECLS
 
@@ -43,17 +44,17 @@ struct _GstDmabufMeta
   guint64 drm_modifier;
 };
 
-GST_EXPORT
+GST_ALLOCATORS_API
 GType gst_dmabuf_meta_api_get_type (void);
-GST_EXPORT
+GST_ALLOCATORS_API
 const GstMetaInfo *gst_dmabuf_meta_get_info (void);
 
 #define gst_buffer_get_dmabuf_meta(b) ((GstDmabufMeta*)gst_buffer_get_meta((b),GST_DMABUF_META_API_TYPE))
 
-GST_EXPORT
+GST_ALLOCATORS_API
 GstDmabufMeta * gst_buffer_add_dmabuf_meta (GstBuffer * buffer, guint64 drm_modifier);
 
-GST_EXPORT
+GST_ALLOCATORS_API
 void gst_query_add_allocation_dmabuf_meta (GstQuery * query, guint64 drm_modifier);
 
 G_END_DECLS
