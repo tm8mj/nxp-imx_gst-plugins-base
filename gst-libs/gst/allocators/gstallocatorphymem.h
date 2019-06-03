@@ -22,6 +22,7 @@
 
 #include <gst/gst.h>
 #include <gst/gstallocator.h>
+#include <gst/allocators/allocators-prelude.h>
 
 #define PAGE_ALIGN(x) (((x) + 4095) & ~4095)
 
@@ -56,16 +57,16 @@ struct _GstAllocatorPhyMemClass {
                       PhyMemBlock *src_mem, guint offset, guint size);
 };
 
-GST_EXPORT
+GST_ALLOCATORS_API
 GType gst_allocator_phymem_get_type (void);
 
-GST_EXPORT
+GST_ALLOCATORS_API
 gboolean gst_buffer_is_phymem (GstBuffer *buffer);
 
-GST_EXPORT
+GST_ALLOCATORS_API
 PhyMemBlock *gst_buffer_query_phymem_block (GstBuffer *buffer);
 
-GST_EXPORT
+GST_ALLOCATORS_API
 PhyMemBlock *gst_memory_query_phymem_block (GstMemory *mem);
 
 #endif

@@ -23,6 +23,7 @@
 
 #include <gst/gst.h>
 #include <gst/allocators/gstdmabuf.h>
+#include <gst/allocators/allocators-prelude.h>
 
 G_BEGIN_DECLS
 
