@@ -22,6 +22,7 @@
 
 #include <gst/gst.h>
 #include <gst/video/video.h>
+#include <gst/video/video-prelude.h>
 
 G_BEGIN_DECLS
 
@@ -55,15 +56,15 @@ struct _GstVideoHdr10Meta
 
   GstHdr10Meta hdr10meta;
 };
-GST_EXPORT
+GST_VIDEO_API
 GType gst_video_hdr10_meta_api_get_type          (void);
 
-GST_EXPORT
+GST_VIDEO_API
 const GstMetaInfo *gst_video_hdr10_meta_get_info (void);
 
 #define gst_buffer_get_video_hdr10_meta(b) \
     ((GstVideoHdr10Meta *)gst_buffer_get_meta((b),GST_VIDEO_HDR10_META_API_TYPE))
-GST_EXPORT
+GST_VIDEO_API
 GstVideoHdr10Meta *gst_buffer_add_video_hdr10_meta (GstBuffer * buffer);
 
 G_END_DECLS

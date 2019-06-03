@@ -17,6 +17,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "gstphymemmeta.h"
 
 GST_DEBUG_CATEGORY_STATIC(phy_mem_meta_debug);
