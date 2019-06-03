@@ -23,6 +23,7 @@
 
 #include <gst/gst.h>
 #include <gst/allocators/gstdmabuf.h>
+#include <gst/allocators/allocators-prelude.h>
 
 G_BEGIN_DECLS
 
@@ -57,10 +58,10 @@ struct _GstIONAllocatorClass
   GstDmaBufAllocatorClass parent;
 };
 
-GST_EXPORT
+GST_ALLOCATORS_API
 GType gst_ion_allocator_get_type (void);
 
-GST_EXPORT
+GST_ALLOCATORS_API
 GstAllocator* gst_ion_allocator_obtain (void);
 
 G_END_DECLS
