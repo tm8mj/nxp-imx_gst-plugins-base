@@ -22,7 +22,7 @@
 #define __GST_GL_WINDOW_WAYLAND_EGL_H__
 
 #include <wayland-client.h>
-#include "xdg-shell-client-protocol.h"
+#include <gst/gl/wayland/xdg-shell-client-protocol.h>
 #include <wayland-egl.h>
 #include <wayland-cursor.h>
 
