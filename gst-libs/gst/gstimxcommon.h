@@ -75,6 +75,7 @@ typedef enum
   CC_MX8M = CHIPCODE ('M', 'X', '8', '2'),
   CC_MX8MM = CHIPCODE ('M', 'X', '8', '4'),
   CC_MX8MN = CHIPCODE ('M', 'X', '8', '5'),
+  CC_MX8MP = CHIPCODE ('M', 'X', '8', '6'),
   CC_UNKN = CHIPCODE ('U', 'N', 'K', 'N')
 
 } CHIP_CODE;
@@ -119,11 +120,12 @@ typedef enum {
 #define HAS_DPU() check_feature(imx_chip_code(), DPU)
 #define HAS_DCSS() check_feature(imx_chip_code(), DCSS)
 
-#define IS_HANTRO() ((CC_MX8M == imx_chip_code()) || (CC_MX8MM == imx_chip_code()) )
+#define IS_HANTRO() ((CC_MX8M == imx_chip_code()) || (CC_MX8MM == imx_chip_code()) || (CC_MX8MP == imx_chip_code()) )
 #define IS_AMPHION() ((CC_MX8QM == imx_chip_code()) || (CC_MX8QXP == imx_chip_code()))
 #define IS_IMX8MM() (CC_MX8MM == imx_chip_code())
 #define IS_IMX8MN() (CC_MX8MN == imx_chip_code())
 #define IS_IMX8MQ() (CC_MX8M == imx_chip_code())
+#define IS_IMX8MP() (CC_MX8MP == imx_chip_code())
 #define IS_IMX8Q() ((CC_MX8QM == imx_chip_code()) || (CC_MX8QXP == imx_chip_code()))
 #define IS_IMX6Q() (CC_MX6Q == imx_chip_code())
 
@@ -236,6 +238,7 @@ static SOC_INFO soc_info[] = {
   {CC_MX8M, "i.MX8MQ"},
   {CC_MX8MM, "i.MX8MM"},
   {CC_MX8MN, "i.MX8MN"},
+  {CC_MX8MP, "i.MX8MP"},
 };
 
 static CHIP_CODE getChipCodeFromSocid (void)
@@ -321,6 +324,7 @@ static IMXV4l2FeatureMap g_imxv4l2feature_maps[] = {
   {CC_MX8QXP, TRUE, TRUE, FALSE, FALSE, TRUE, TRUE, FALSE},
   {CC_MX8M, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE},
   {CC_MX8MM, TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE},
+  {CC_MX8MP, TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE},
   {CC_MX8MN, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE},
 };
 
