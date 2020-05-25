@@ -2156,6 +2156,12 @@ _directviv_upload_free (gpointer impl)
   if (directviv->params)
     gst_gl_allocation_params_free ((GstGLAllocationParams *) directviv->params);
 
+  if (directviv->inbuf)
+    gst_buffer_unref (directviv->inbuf);
+
+  if (directviv->pool)
+    gst_object_unref(directviv->pool);
+
   g_free (impl);
 }
 
