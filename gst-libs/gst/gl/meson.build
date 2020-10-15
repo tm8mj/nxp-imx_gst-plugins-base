@@ -924,6 +924,10 @@ if need_platform_egl != 'no' and need_win_viv_fb != 'no'
         'viv-fb/gstgldisplay_viv_fb.c',
         'viv-fb/gstglwindow_viv_fb_egl.c',
       ]
+      gl_viv_fb_headers = [
+        'viv-fb/gstgldisplay_viv_fb.h'
+      ]
+      install_headers(gl_viv_fb_headers, subdir : 'gstreamer-1.0/gst/gl/viv-fb')
       gl_cpp_args += ['-DEGL_API_FB']
     endif
   endif
