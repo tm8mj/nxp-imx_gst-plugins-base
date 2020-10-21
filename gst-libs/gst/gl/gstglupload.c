@@ -1948,6 +1948,7 @@ _directviv_upload_propose_allocation (gpointer impl, GstQuery * decide_query,
   GstCaps *caps;
   GstVideoInfo info;
   GstVideoFormat fmt;
+  GstCapsFeatures * caps_features;
 
   fmt = GST_VIDEO_INFO_FORMAT (&directviv->upload->priv->out_info);
 
@@ -1968,6 +1969,12 @@ _directviv_upload_propose_allocation (gpointer impl, GstQuery * decide_query,
 
   if (!gst_video_info_from_caps (&info, caps))
     goto invalid_caps;
+
+  caps_features = gst_caps_get_features (caps, 0);
+  if (gst_caps_features_contains (caps_features, "memory:GLMemory")) {
+    GST_DEBUG ("upstream has memory:GLMemory feature");
+    return;
+  }
 
   allocator = gst_phy_mem_allocator_obtain ();
   if (!allocator) {
