@@ -831,6 +831,20 @@ new_source_handler (GstURIDecodeBin3 * uridecodebin, gboolean is_main)
 }
 
 static void
+gst_uri_decode_bin3_set_connection_speed (GstURIDecodeBin3 * dec)
+{
+  GList *walk;
+
+  /* set the property on all decodebins now */
+  for (walk = dec->source_handlers; walk; walk = g_list_next (walk)) {
+    GstSourceHandler *handler = (GstSourceHandler *) (walk->data);
+
+    g_object_set (handler->urisourcebin, "connection-speed",
+        dec->connection_speed / 1000, NULL);
+  }
+}
+
+static void
 gst_uri_decode_bin3_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
@@ -850,6 +864,7 @@ gst_uri_decode_bin3_set_property (GObject * object, guint prop_id,
     case PROP_CONNECTION_SPEED:
       GST_URI_DECODE_BIN3_LOCK (dec);
       dec->connection_speed = g_value_get_uint64 (value) * 1000;
+      gst_uri_decode_bin3_set_connection_speed (dec);
       GST_URI_DECODE_BIN3_UNLOCK (dec);
       break;
     case PROP_BUFFER_SIZE:
