@@ -548,6 +548,30 @@ gst_uri_source_bin_finalize (GObject * obj)
 }
 
 static void
+gst_uri_source_bin_update_connection_speed (GstURISourceBin * urisrc)
+{
+  guint64 speed = 0;
+  GParamSpec *pspec = NULL;
+  GList *tmp;
+
+  GST_OBJECT_LOCK (urisrc);
+  speed = urisrc->connection_speed / 1000;
+  GST_OBJECT_UNLOCK (urisrc);
+
+  if (urisrc->is_adaptive) {
+    for (tmp = urisrc->src_infos; tmp; tmp = tmp->next) {
+      ChildSrcPadInfo *info = tmp->data;
+      if (info->demuxer) {
+        pspec = g_object_class_find_property (G_OBJECT_GET_CLASS (info->demuxer),
+            "connection-speed");
+        if (pspec != NULL)
+          g_object_set (info->demuxer, "connection-speed", speed, NULL);
+      }
+    }
+  }
+}
+
+static void
 gst_uri_source_bin_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
@@ -564,6 +588,7 @@ gst_uri_source_bin_set_property (GObject * object, guint prop_id,
       GST_OBJECT_LOCK (urisrc);
       urisrc->connection_speed = g_value_get_uint64 (value) * 1000;
       GST_OBJECT_UNLOCK (urisrc);
+      gst_uri_source_bin_update_connection_speed (urisrc);
       break;
     case PROP_BUFFER_SIZE:
       urisrc->buffer_size = g_value_get_int (value);
