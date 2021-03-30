@@ -1398,6 +1398,22 @@ _create_stream_group (GstEncodeBin * ebin, GstEncodingProfile * sprof,
    * * One for already encoded data
    */
 
+  /* Put _get_encoder() before request pad from muxer as _get_encoder() may fail and
+   * MOV/MP4 muxer don't support addition/removal of tracks at random times */
+  sgroup->encoder = _get_encoder (ebin, sprof);
+  if (!sgroup->encoder && (gst_encoding_profile_get_preset (sgroup->profile)
+          || gst_encoding_profile_get_preset_name (sgroup->profile))) {
+
+    if (!encoder_not_found)
+      _post_missing_plugin_message (ebin, sprof);
+    else
+      *encoder_not_found = TRUE;
+    goto cleanup;
+  } else {
+    /* passthrough can still work, if we discover that *
+     * encoding is required we post a missing plugin message */
+  }
+
   /* Muxer.
    * If we are handling a container profile, figure out if the muxer has a
    * sinkpad compatible with the selected profile */
@@ -1568,9 +1584,6 @@ _create_stream_group (GstEncodeBin * ebin, GstEncodingProfile * sprof,
   srcpad = NULL;
 
   /* Path 2 : Conversion / Encoding */
-
-  /* 1. Create the encoder */
-  GST_LOG ("Adding encoder");
   if (sgroup->encoder) {
     gst_bin_add ((GstBin *) ebin, sgroup->encoder);
     tosync = g_list_append (tosync, sgroup->encoder);
@@ -1586,19 +1599,7 @@ _create_stream_group (GstEncodeBin * ebin, GstEncodingProfile * sprof,
     gst_object_unref (sinkpad);
     gst_object_unref (srcpad);
     srcpad = NULL;
-  } else if (gst_encoding_profile_get_preset (sgroup->profile)
-      || gst_encoding_profile_get_preset_name (sgroup->profile)) {
-
-    if (!encoder_not_found)
-      _post_missing_plugin_message (ebin, sprof);
-    else
-      *encoder_not_found = TRUE;
-    goto cleanup;
-  } else {
-    /* passthrough can still work, if we discover that *
-     * encoding is required we post a missing plugin message */
   }
-
 
   /* 3. Create the conversion/restriction elements */
   /* 3.1. capsfilter */
