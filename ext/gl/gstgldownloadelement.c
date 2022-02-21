@@ -35,7 +35,7 @@
 #include <gst/gl/gstglphymemory.h>
 #endif
 
-#if GST_GL_HAVE_IONDMA
+#if GST_GL_HAVE_IONDMA || GST_GL_HAVE_DMABUFHEAPS
 #include <gst/gl/gstglmemorydma.h>
 #endif
 
@@ -1426,7 +1426,7 @@ gst_gl_download_element_propose_allocation (GstBaseTransform * bt,
 
   GST_DEBUG_OBJECT (bt, "video format is %s", gst_video_format_to_string (fmt));
 
-#if GST_GL_HAVE_IONDMA
+#if GST_GL_HAVE_IONDMA || GST_GL_HAVE_DMABUFHEAPS
   if (fmt == GST_VIDEO_FORMAT_RGBA || fmt == GST_VIDEO_FORMAT_RGB16) {
     allocator = gst_gl_memory_dma_allocator_obtain ();
     GST_DEBUG_OBJECT (bt, "obtain dma memory allocator %p.", allocator);
