@@ -7352,6 +7352,7 @@ get_scale_format (GstVideoFormat format, gint plane)
     case GST_VIDEO_FORMAT_P016_LE:
     case GST_VIDEO_FORMAT_P012_BE:
     case GST_VIDEO_FORMAT_P012_LE:
+    case GST_VIDEO_FORMAT_Y012_LE:
     case GST_VIDEO_FORMAT_Y212_BE:
     case GST_VIDEO_FORMAT_Y212_LE:
     case GST_VIDEO_FORMAT_Y412_BE:
