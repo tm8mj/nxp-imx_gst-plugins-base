@@ -1364,22 +1364,24 @@ sink_event_function (GstPad * sinkpad, GstDecodebin3 * dbin, GstEvent * event)
 
       gst_event_parse_stream_collection (event, &collection);
       if (collection) {
-        INPUT_LOCK (dbin);
-        handle_stream_collection (dbin, collection, input);
-        gst_object_unref (collection);
-        INPUT_UNLOCK (dbin);
-        SELECTION_LOCK (dbin);
-        /* Post the (potentially) updated collection */
-        if (dbin->collection) {
-          GstMessage *msg;
-          msg =
-              gst_message_new_stream_collection ((GstObject *) dbin,
-              dbin->collection);
-          SELECTION_UNLOCK (dbin);
-          gst_element_post_message (GST_ELEMENT_CAST (dbin), msg);
-          update_requested_selection (dbin);
-        } else
-          SELECTION_UNLOCK (dbin);
+        if (dbin->collection != collection) {
+          INPUT_LOCK (dbin);
+          handle_stream_collection (dbin, collection, input);
+          gst_object_unref (collection);
+          INPUT_UNLOCK (dbin);
+          SELECTION_LOCK (dbin);
+          /* Post the (potentially) updated collection */
+          if (dbin->collection) {
+            GstMessage *msg;
+            msg =
+                gst_message_new_stream_collection ((GstObject *) dbin,
+                dbin->collection);
+            SELECTION_UNLOCK (dbin);
+            gst_element_post_message (GST_ELEMENT_CAST (dbin), msg);
+            update_requested_selection (dbin);
+          } else
+            SELECTION_UNLOCK (dbin);
+        }
       }
 
       /* If we are waiting to create an identity passthrough, do it now */
@@ -2846,14 +2848,12 @@ reconfigure_output_stream (DecodebinOutputStream * output,
       if (output->decoder == NULL) {
         GstCaps *caps;
 
-        SELECTION_UNLOCK (dbin);
         /* FIXME : Should we be smarter if there's a missing decoder ?
          * Should we deactivate that stream ? */
         caps = gst_stream_get_caps (slot->active_stream);
         gst_element_post_message (GST_ELEMENT_CAST (dbin),
             gst_missing_decoder_message_new (GST_ELEMENT_CAST (dbin), caps));
         gst_caps_unref (caps);
-        SELECTION_LOCK (dbin);
         ret = FALSE;
         goto cleanup;
       }
