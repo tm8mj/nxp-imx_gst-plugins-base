@@ -255,6 +255,8 @@ struct _GstDecodebin3
   gboolean selection_updated;
   /* End of variables protected by selection_lock */
   gboolean upstream_selected;
+  /* When the first selection ready, this condition will been signal */
+  GCond first_selection;
 
   /* Factories */
   GMutex factories_lock;
@@ -637,6 +639,7 @@ gst_decodebin3_init (GstDecodebin3 * dbin)
   g_mutex_init (&dbin->factories_lock);
   g_mutex_init (&dbin->selection_lock);
   g_mutex_init (&dbin->input_lock);
+  g_cond_init (&dbin->first_selection);
 
   dbin->caps = gst_static_caps_get (&default_raw_caps);
 
@@ -756,6 +759,7 @@ gst_decodebin3_finalize (GObject * object)
   g_mutex_clear (&dbin->factories_lock);
   g_mutex_clear (&dbin->selection_lock);
   g_mutex_clear (&dbin->input_lock);
+  g_cond_clear (&dbin->first_selection);
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -1434,7 +1438,7 @@ sink_event_function (GstPad * sinkpad, GstDecodebin3 * dbin, GstEvent * event)
 
   g_return_val_if_fail (input, FALSE);
 
-  GST_DEBUG_OBJECT (sinkpad, "event %" GST_PTR_FORMAT, event);
+  GST_LOG_OBJECT (sinkpad, "event %" GST_PTR_FORMAT, event);
 
   switch (GST_EVENT_TYPE (event)) {
     case GST_EVENT_STREAM_START:
@@ -1479,6 +1483,7 @@ sink_event_function (GstPad * sinkpad, GstDecodebin3 * dbin, GstEvent * event)
         post_collection = handle_stream_collection (dbin, collection, input);
         gst_object_unref (collection);
         INPUT_UNLOCK (dbin);
+
         SELECTION_LOCK (dbin);
         /* Post the (potentially) updated collection */
         if (post_collection) {
@@ -1488,11 +1493,12 @@ sink_event_function (GstPad * sinkpad, GstDecodebin3 * dbin, GstEvent * event)
               dbin->collection);
           SELECTION_UNLOCK (dbin);
           gst_element_post_message (GST_ELEMENT_CAST (dbin), msg);
+          update_requested_selection (dbin);
         } else
           SELECTION_UNLOCK (dbin);
 
         /* In all cases we want to make sure the selection is valid */
-        update_requested_selection (dbin);
+        //update_requested_selection (dbin);
       }
 
       /* If we are waiting to create an identity passthrough, do it now */
@@ -1810,6 +1816,7 @@ beach:
     dbin->requested_selection =
         g_list_copy_deep (tmp, (GCopyFunc) g_strdup, NULL);
     dbin->selection_updated = TRUE;
+    g_cond_signal (&dbin->first_selection);
     g_list_free (tmp);
   }
   SELECTION_UNLOCK (dbin);
@@ -2082,6 +2089,7 @@ handle_stream_collection (GstDecodebin3 * dbin,
     GST_FIXME_OBJECT (dbin, "New collection but already had one ...");
     /* FIXME : When do we switch from pending collection to active collection ?
      * When all streams from active collection are drained in multiqueue output ? */
+
     gst_object_unref (dbin->collection);
     dbin->collection = collection;
   }
@@ -2492,6 +2500,10 @@ check_slot_reconfiguration (GstDecodebin3 * dbin, MultiQueueSlot * slot)
   GstMessage *msg = NULL;
 
   SELECTION_LOCK (dbin);
+
+  while (!dbin->requested_selection)
+    g_cond_wait (&dbin->first_selection, &dbin->selection_lock);
+
   output = get_output_for_slot (slot);
   if (!output) {
     SELECTION_UNLOCK (dbin);
