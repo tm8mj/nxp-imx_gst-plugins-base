@@ -3812,10 +3812,15 @@ gst_gl_upload_transform_caps (GstGLUpload * upload, GstGLContext * context,
         /* Add formats supported by #GstGLMemory to raw caps */
         for (i = 0; i < gst_caps_get_size (raw_tmp); i++) {
           GstStructure *s = gst_caps_get_structure (raw_tmp, i);
+          GValue formats = G_VALUE_INIT;
 
-          _set_default_formats_list (s);
+          g_value_init (&formats, GST_TYPE_LIST);
+          gst_value_deserialize (&formats, GST_GL_MEMORY_VIDEO_FORMATS_STR);
+          gst_structure_take_value (s, "format", &formats);
+
           gst_structure_remove_fields (s, "texture-target", NULL);
           gst_structure_free (s);
+          g_value_unset (&formats);
         }
 
         gst_caps_append (tmp, raw_tmp);
