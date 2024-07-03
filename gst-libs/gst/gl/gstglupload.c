@@ -3819,7 +3819,6 @@ gst_gl_upload_transform_caps (GstGLUpload * upload, GstGLContext * context,
           gst_structure_take_value (s, "format", &formats);
 
           gst_structure_remove_fields (s, "texture-target", NULL);
-          gst_structure_free (s);
           g_value_unset (&formats);
         }
 
