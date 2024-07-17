@@ -1822,12 +1822,19 @@ _dma_buf_upload_propose_allocation (gpointer impl, GstQuery * decide_query,
   }
   GST_DEBUG ("create ion allocator(%p).", allocator);
 
-  gst_query_set_nth_allocation_param (query, 0, allocator, NULL);
+  if (gst_query_get_n_allocation_params (query) == 0) {
+    gst_query_add_allocation_param (query, allocator, NULL);
+  } else {
+    gst_query_set_nth_allocation_param (query, 0, allocator, NULL);
+  }
 
   if (!_dma_buf_upload_setup_buffer_pool (&pool, allocator, caps, &info))
     goto setup_failed;
 
-  gst_query_set_nth_allocation_pool (query, 0, pool, info.size, 1, 30);
+  if (gst_query_get_n_allocation_pools (query) == 0)
+    gst_query_add_allocation_pool (query, pool, info.size, 1, 30);
+  else
+    gst_query_set_nth_allocation_pool (query, 0, pool, info.size, 1, 30);
 
   if (pool)
     gst_object_unref (pool);
